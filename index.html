@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>English Challenge - NTT 2020</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap");
+
+      body {
+        font-family: "Quicksand", sans-serif;
+        background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+        min-height: 100vh;
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+
+      .option-btn {
+        transition: all 0.2s ease;
+        border: 2px solid #e5e7eb;
+      }
+
+      .option-btn:hover:not(:disabled) {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+      }
+
+      .option-btn.correct {
+        border-color: #22c55e;
+        background-color: #f0fdf4;
+        color: #166534;
+      }
+
+      .option-btn.wrong {
+        border-color: #ef4444;
+        background-color: #fef2f2;
+        color: #991b1b;
+      }
+
+      .heart-beat {
+        animation: beat 0.3s ease-in-out;
+      }
+
+      @keyframes beat {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .reading-box {
+        background-color: #fdf2f8;
+        border-left: 4px solid #ec4899;
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-8">
+    <div id="game-container" class="max-w-3xl mx-auto">
+      <!-- Start Screen -->
+      <div id="start-screen" class="glass-card p-8 text-center">
+        <h1 class="text-3xl font-bold text-pink-600 mb-4">
+          English Challenge 2020
+        </h1>
+        <p class="text-gray-600 mb-8">
+          Chào mừng bạn đến với thử thách tiếng Anh vào lớp 6!<br />Bạn có 3
+          mạng (❤️). Hãy cố gắng trả lời đúng hết các câu hỏi nhé.
+        </p>
+        <button
+          onclick="startGame()"
+          class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-10 rounded-full transition-all shadow-lg shadow-pink-200"
+        >
+          BẮT ĐẦU NGAY
+        </button>
+      </div>
+
+      <!-- Quiz Screen -->
+      <div id="quiz-screen" class="hidden">
+        <!-- Header Info -->
+        <div class="flex justify-between items-center mb-6 px-2">
+          <div class="flex items-center space-x-2">
+            <span
+              id="hearts-container"
+              class="text-red-500 text-xl flex"
+            ></span>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-500 font-medium">
+              Câu hỏi <span id="current-index">1</span>/26
+            </p>
+            <p class="text-lg font-bold text-blue-600">
+              Điểm: <span id="current-score">0</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 md:p-8">
+          <!-- Reading Content Area -->
+          <div
+            id="context-area"
+            class="hidden mb-6 p-4 rounded-xl reading-box text-sm md:text-base italic text-gray-700"
+          ></div>
+
+          <!-- Question Title -->
+          <h2
+            id="question-text"
+            class="text-xl font-semibold text-gray-800 mb-6"
+          ></h2>
+
+          <!-- Options -->
+          <div id="options-container" class="space-y-3">
+            <!-- Buttons will be injected here -->
+          </div>
+
+          <!-- Text Input (For fill in the blanks) -->
+          <div id="input-container" class="hidden mt-4">
+            <input
+              type="text"
+              id="text-answer"
+              class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none"
+              placeholder="Nhập câu trả lời của bạn..."
+            />
+            <button
+              onclick="checkTextAnswer()"
+              class="mt-4 w-full bg-blue-500 text-white p-3 rounded-xl font-bold"
+            >
+              Nộp bài
+            </button>
+          </div>
+
+          <!-- Writing Task Area -->
+          <div id="writing-container" class="hidden mt-4">
+            <p class="text-sm text-gray-500 mb-2">
+              Yêu cầu: Viết khoảng 30 từ.
+            </p>
+            <textarea
+              id="writing-answer"
+              rows="5"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none"
+              placeholder="Viết đoạn văn của bạn tại đây..."
+              oninput="countWords()"
+            ></textarea>
+            <div class="flex justify-between items-center mt-2">
+              <span class="text-sm text-gray-500"
+                >Số từ: <span id="word-count" class="font-bold">0</span></span
+              >
+              <button
+                onclick="submitWriting()"
+                class="bg-green-500 text-white px-6 py-2 rounded-xl font-bold"
+              >
+                Hoàn thành bài viết
+              </button>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex justify-between mt-10 pt-6 border-t border-gray-100">
+            <button
+              id="prev-btn"
+              onclick="goBack()"
+              class="flex items-center text-gray-500 hover:text-gray-800 disabled:opacity-30"
+              disabled
+            >
+              <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </button>
+            <button
+              id="next-btn"
+              onclick="goNext()"
+              class="flex items-center text-blue-600 font-bold hover:text-blue-800 transition-colors"
+            >
+              Tiếp theo <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Screen -->
+      <div id="result-screen" class="hidden glass-card p-8 text-center">
+        <div id="result-icon" class="text-6xl mb-4"></div>
+        <h2 id="result-title" class="text-3xl font-bold mb-2"></h2>
+        <p id="result-msg" class="text-gray-600 mb-8"></p>
+        <div class="bg-gray-50 rounded-2xl p-6 mb-8 inline-block min-w-[200px]">
+          <p class="text-gray-500 text-sm uppercase tracking-widest mb-1">
+            Điểm cuối cùng
+          </p>
+          <p id="final-score" class="text-5xl font-black text-blue-600">0</p>
+        </div>
+        <div>
+          <button
+            onclick="resetGame()"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-10 rounded-full transition-all shadow-lg"
+          >
+            CHƠI LẠI
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const covidContext =
+        "<strong>REDUCE YOUR RISK OF COVID-19:</strong><br>A. Wash your hands often.<br>B. Cough and sneeze into a tissue or a bent elbow - not your hands.<br>C. Don't touch your face.<br>D. Wear a mask when 1 meter distance from others is not possible.";
+
+      const libraryContext =
+        "<strong>GUIDE TO THE LIBRARY:</strong><br>• Book check out: ground floor<br>• New library cards: 1st floor<br>• Newspapers and magazines: 1st floor<br>• Travel books: 2nd floor<br>• Science books: 3rd floor<br>• History books: 4th floor<br>• Story books: 5th floor";
+
+      const petStoreContext =
+        "<strong>READING PASSAGE:</strong><br>George is at the pet store. He asks for a horse, but his parents say no because horses are too big. He sees dogs (puppies) and cats (kittens); they are easy to care for but get bigger. He sees rabbits, guinea pigs, and mice. He also sees parrots and canaries in cages, but doesn't want to clean the cage.";
+
+      const questions = [
+        {
+          id: 1,
+          type: "mcq",
+          question: "My parents often _______ me to the theme park on Sundays.",
+          options: ["take", "takes", "is taking", "are taking"],
+          answer: 0,
+        },
+        {
+          id: 2,
+          type: "mcq",
+          question:
+            "Peter would like to be a(n) _______ because he wants to design houses in his hometown.",
+          options: ["writer", "architect", "fashion designer", "artist"],
+          answer: 1,
+        },
+        {
+          id: 3,
+          type: "mcq",
+          question: "I found the library book _______ the bed.",
+          options: ["to", "next", "under", "between"],
+          answer: 2,
+        },
+        {
+          id: 4,
+          type: "mcq",
+          question: "When we have a problem, we can talk to _______ teacher.",
+          options: ["me", "mine", "our", "us"],
+          answer: 2,
+        },
+        {
+          id: 5,
+          type: "mcq",
+          question: "How many countries _______ in the world?",
+          options: ["is there", "there is", "there are", "are there"],
+          answer: 3,
+        },
+        {
+          id: 6,
+          type: "mcq",
+          question: "They told me to carry my _______ luggage onto the plane.",
+          options: ["handy", "handing", "handed", "hand"],
+          answer: 3,
+        },
+        {
+          id: 7,
+          type: "mcq",
+          question:
+            "You have five candies. You want to share with your friends. If you want to be _______, you should give one to each friend, so everyone has the same number of candies.",
+          options: ["stubborn", "fair", "brave", "strong"],
+          answer: 1,
+        },
+        {
+          id: 8,
+          type: "mcq",
+          question: "_______! Don't touch the paint, it's wet!",
+          options: ["Hold on", "Try out", "Watch out", "Look at"],
+          answer: 2,
+        },
+        {
+          id: 9,
+          type: "mcq",
+          question:
+            "We _______ fish and vegetables by placing them above boiling water in a container.",
+          options: ["grill", "fry", "steam", "roast"],
+          answer: 2,
+        },
+        {
+          id: 10,
+          type: "mcq",
+          question: "Turn the _______ in the lock to open the door.",
+          options: ["bell", "volume", "key", "stick"],
+          answer: 2,
+        },
+        {
+          id: 11,
+          type: "mcq",
+          context:
+            "<strong>WEATHER FORECAST:</strong><br>• Earlier morning: 24°C - Hazy<br>• Right now: 21°C - Hazy<br>• Tonight: 12°C - Partly cloudy (Chance of rain: 10%)",
+          question:
+            "Look at the weather forecast and circle the correct answer.",
+          options: [
+            "It was cooler earlier today than now.",
+            "It will get hotter in the evening.",
+            "It will get cooler tomorrow.",
+            "It was hotter earlier today than now.",
+          ],
+          answer: 3,
+        },
+        {
+          id: 12,
+          type: "mcq",
+          context:
+            "<strong>MESSAGE:</strong><br>Peter, We're outside the cinema. Text if you're going to be late and we'll wait and watch the next film. If you're not coming, we'll go in now. - Stefan",
+          question: "Who wrote the message?",
+          options: [
+            "Peter and Stefan",
+            "Peter and his friend",
+            "Peter",
+            "Stefan",
+          ],
+          answer: 3,
+        },
+        {
+          id: 13,
+          type: "mcq",
+          question:
+            "Susan: 'How can I get to the Opera House?'<br>Stranger: '_______'",
+          options: [
+            "It's on the corner of Trang Tien street.",
+            "It is opposite Trang Tien Plaza.",
+            "You can take bus number 12.",
+            "Don't go to the post office.",
+          ],
+          answer: 2,
+        },
+        {
+          id: 14,
+          type: "mcq",
+          context: covidContext,
+          question:
+            "Picture 1: Which precaution is being followed in this image?",
+          options: ["A", "B", "C", "D"],
+          answer: 3,
+        },
+        {
+          id: 15,
+          type: "mcq",
+          context: covidContext,
+          question:
+            "Picture 2: Look at the gesture. Which precaution does it represent?",
+          options: ["A", "B", "C", "D"],
+          answer: 2,
+        },
+        {
+          id: 16,
+          type: "mcq",
+          context: covidContext,
+          question:
+            "Picture 3: Look at the action. Which precaution is being used?",
+          options: ["A", "B", "C", "D"],
+          answer: 1,
+        },
+        {
+          id: 17,
+          type: "mcq",
+          context: covidContext,
+          question:
+            "Picture 4: Which precaution is being practiced in this image?",
+          options: ["A", "B", "C", "D"],
+          answer: 0,
+        },
+        {
+          id: 18,
+          type: "mcq",
+          context: libraryContext,
+          question:
+            "Evan likes to learn about famous people from the past. He goes to the:",
+          options: ["1st floor", "4th floor", "5th floor", "3rd floor"],
+          answer: 1,
+        },
+        {
+          id: 19,
+          type: "mcq",
+          context: libraryContext,
+          question:
+            "Carol has a library card and wants to check out a book. She goes to the:",
+          options: ["Ground floor", "1st floor", "2nd floor", "5th floor"],
+          answer: 0,
+        },
+        {
+          id: 20,
+          type: "mcq",
+          context: libraryContext,
+          question:
+            "Ana plans to visit a country far away. She needs a book from the:",
+          options: ["2nd floor", "3rd floor", "5th floor", "1st floor"],
+          answer: 0,
+        },
+        {
+          id: 21,
+          type: "mcq",
+          context: libraryContext,
+          question: "Gary wants to read about the Earth. He goes to the:",
+          options: ["1st floor", "2nd floor", "3rd floor", "ground floor"],
+          answer: 2,
+        },
+        {
+          id: 22,
+          type: "input",
+          context: petStoreContext,
+          question:
+            "George wants a _______ for his birthday but his parents say no because it's too big.",
+          answer: "horse",
+        },
+        {
+          id: 23,
+          type: "input",
+          context: petStoreContext,
+          question:
+            "George likes puppies and kittens because they are easy to take care of, but they will get _______.",
+          answer: "bigger",
+        },
+        {
+          id: 24,
+          type: "input",
+          context: petStoreContext,
+          question: "Parrots, canaries and rabbits live in _______.",
+          answer: "cages",
+        },
+        {
+          id: 25,
+          type: "input",
+          question:
+            "Sửa lỗi sai trong câu sau: 'One day he ran away and get stuck in the mud.'",
+          answer: "got",
+        },
+        {
+          id: 26,
+          type: "writing",
+          question:
+            "Question 26: You have saved some lucky money. How do you want to spend that money?",
+          sample:
+            "I have saved some lucky money from the Lunar New Year. I want to spend it on some new English storybooks to improve my vocabulary. Also, I will donate a small part to the poor children in my neighborhood.",
+        },
+      ];
+
+      let currentIndex = 0;
+      let lives = 3;
+      let score = 0;
+      let userAnswers = new Array(questions.length).fill(null);
+
+      function startGame() {
+        document.getElementById("start-screen").classList.add("hidden");
+        document.getElementById("quiz-screen").classList.remove("hidden");
+        updateUI();
+      }
+
+      function updateUI() {
+        const q = questions[currentIndex];
+        const history = userAnswers[currentIndex];
+
+        document.getElementById("current-index").innerText = currentIndex + 1;
+        document.getElementById("current-score").innerText = score;
+        renderHearts();
+
+        const contextArea = document.getElementById("context-area");
+        if (q.context) {
+          contextArea.innerHTML = q.context;
+          contextArea.classList.remove("hidden");
+        } else {
+          contextArea.classList.add("hidden");
+        }
+
+        document.getElementById("question-text").innerHTML = q.question;
+
+        const optionsContainer = document.getElementById("options-container");
+        const inputContainer = document.getElementById("input-container");
+        const writingContainer = document.getElementById("writing-container");
+
+        optionsContainer.innerHTML = "";
+        inputContainer.classList.add("hidden");
+        writingContainer.classList.add("hidden");
+
+        if (q.type === "mcq") {
+          q.options.forEach((opt, idx) => {
+            const btn = document.createElement("button");
+            btn.className =
+              "option-btn w-full p-4 rounded-xl text-left font-medium";
+            btn.innerText = opt;
+
+            if (history !== null) {
+              if (idx === q.answer) btn.classList.add("correct");
+              if (history.selectedIndex === idx && idx !== q.answer)
+                btn.classList.add("wrong");
+              btn.disabled = true;
+            } else {
+              btn.onclick = () => selectOption(idx);
+            }
+            optionsContainer.appendChild(btn);
+          });
+        } else if (q.type === "input") {
+          inputContainer.classList.remove("hidden");
+          const input = document.getElementById("text-answer");
+          const submitBtn = inputContainer.querySelector("button");
+
+          if (history !== null) {
+            input.value = history.textValue;
+            input.disabled = true;
+            submitBtn.classList.add("hidden");
+            const feedback = document.createElement("p");
+            feedback.className = history.isCorrect
+              ? "text-green-600 font-bold mt-2"
+              : "text-red-600 font-bold mt-2";
+            feedback.innerText = history.isCorrect
+              ? "✓ Chính xác!"
+              : `✗ Sai rồi! Đáp án là: ${q.answer}`;
+            optionsContainer.appendChild(feedback);
+          } else {
+            input.value = "";
+            input.disabled = false;
+            submitBtn.classList.remove("hidden");
+          }
+        } else if (q.type === "writing") {
+          writingContainer.classList.remove("hidden");
+          const textarea = document.getElementById("writing-answer");
+          const submitBtn = writingContainer.querySelector("button");
+
+          if (history !== null) {
+            textarea.value = history.textValue;
+            textarea.disabled = true;
+            submitBtn.classList.add("hidden");
+
+            const sampleBox = document.createElement("div");
+            sampleBox.className =
+              "mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200";
+            sampleBox.innerHTML = `<p class="font-bold text-blue-800 mb-1">Sample Answer:</p><p class="text-sm text-blue-700 italic">${q.sample}</p>`;
+            optionsContainer.appendChild(sampleBox);
+          } else {
+            textarea.value = "";
+            textarea.disabled = false;
+            submitBtn.classList.remove("hidden");
+          }
+        }
+
+        document.getElementById("prev-btn").disabled = currentIndex === 0;
+        document.getElementById("next-btn").disabled = false;
+      }
+
+      function countWords() {
+        const text = document.getElementById("writing-answer").value.trim();
+        const count = text === "" ? 0 : text.split(/\s+/).length;
+        document.getElementById("word-count").innerText = count;
+      }
+
+      function renderHearts() {
+        const container = document.getElementById("hearts-container");
+        container.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+          const heart = document.createElement("i");
+          heart.className =
+            i < lives ? "fas fa-heart mr-1" : "far fa-heart mr-1 text-gray-300";
+          if (i === lives - 1 && lives > 0) heart.classList.add("heart-beat");
+          container.appendChild(heart);
+        }
+      }
+
+      function selectOption(idx) {
+        const q = questions[currentIndex];
+        const isCorrect = idx === q.answer;
+        userAnswers[currentIndex] = {
+          selectedIndex: idx,
+          isCorrect: isCorrect,
+        };
+        if (isCorrect) {
+          score += 10;
+        } else {
+          lives--;
+          if (lives <= 0) {
+            setTimeout(() => endGame(false), 500);
+            return;
+          }
+        }
+        updateUI();
+      }
+
+      function checkTextAnswer() {
+        const q = questions[currentIndex];
+        const val = document
+          .getElementById("text-answer")
+          .value.trim()
+          .toLowerCase();
+        if (!val) return;
+        const isCorrect = val === q.answer.toLowerCase();
+        userAnswers[currentIndex] = { textValue: val, isCorrect: isCorrect };
+        if (isCorrect) {
+          score += 10;
+        } else {
+          lives--;
+          if (lives <= 0) {
+            setTimeout(() => endGame(false), 500);
+            return;
+          }
+        }
+        updateUI();
+      }
+
+      function submitWriting() {
+        const text = document.getElementById("writing-answer").value.trim();
+        if (text.length < 5) return;
+        userAnswers[currentIndex] = { textValue: text, isCorrect: true };
+        score += 20; // Thưởng 20 điểm cho phần viết
+        updateUI();
+      }
+
+      function goBack() {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateUI();
+        }
+      }
+      function goNext() {
+        if (currentIndex < questions.length - 1) {
+          currentIndex++;
+          updateUI();
+        } else {
+          endGame(true);
+        }
+      }
+
+      function endGame(victory) {
+        document.getElementById("quiz-screen").classList.add("hidden");
+        document.getElementById("result-screen").classList.remove("hidden");
+        const title = document.getElementById("result-title");
+        const msg = document.getElementById("result-msg");
+        const icon = document.getElementById("result-icon");
+        if (victory) {
+          icon.innerText = "🏆";
+          title.innerText = "Làm tốt lắm!";
+          msg.innerText = "Bạn đã hoàn thành xuất sắc bài thi này!";
+          title.classList.add("text-yellow-600");
+        } else {
+          icon.innerText = "💔";
+          title.innerText = "Kết thúc";
+          msg.innerText = "Bạn đã hết mạng rồi. Thử lại để đạt điểm cao nhé!";
+          title.classList.add("text-red-600");
+        }
+        document.getElementById("final-score").innerText = score;
+      }
+
+      function resetGame() {
+        currentIndex = 0;
+        lives = 3;
+        score = 0;
+        userAnswers = new Array(questions.length).fill(null);
+        document.getElementById("result-screen").classList.add("hidden");
+        document.getElementById("start-screen").classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>
